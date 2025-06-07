@@ -19,6 +19,9 @@ class Writer{
 
     void writeModalHeader();
     void writeOutVariables();
+    void writeParams();
+    void writeSlackParams();
+    void writeAdmittanceMatrix();
 
 
 
