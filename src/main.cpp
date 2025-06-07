@@ -1,6 +1,7 @@
 #include <iomanip>
 #include <iostream>
 #include "service/MParser.h"
+#include "service/Writer.h"
 
 int main()
 {
@@ -45,6 +46,9 @@ int main()
         }
         std::cout << "\n";
     }
+
+    Writer writer(parser);
+    writer.write();
 
 
     return 0;

@@ -15,6 +15,8 @@ file(REMOVE_RECURSE ${CMAKE_BINARY_DIR}/resources/data)
 file(GLOB CASE_FILES "${CMAKE_SOURCE_DIR}/resources/data/*.m")
 file(COPY ${CASE_FILES} DESTINATION ${CMAKE_BINARY_DIR}/resources/data)
 
+target_compile_definitions(MConverter PRIVATE OUTPUT_PATH="${CMAKE_BINARY_DIR}/")
+
 
 target_include_directories(MConverter
         PRIVATE
