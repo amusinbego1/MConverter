@@ -1,0 +1,8 @@
+# ninja log v5
+5	826	7710157248059897	CMakeFiles/MConverter.dir/src/main.cpp.obj	de31ef9f157b8600
+13	1818	7710157257963589	CMakeFiles/MConverter.dir/src/service/MParser.cpp.obj	3858e78059b2a70c
+1818	2033	7710157259926435	MConverter.exe	63105da6abf6f34c
+3	1689	7710159296114486	CMakeFiles/MConverter.dir/src/service/MParser.cpp.obj	3858e78059b2a70c
+1690	1916	7710159298206972	MConverter.exe	63105da6abf6f34c
+2	933	7710160809176197	CMakeFiles/MConverter.dir/src/main.cpp.obj	de31ef9f157b8600
+934	1137	7710160811023615	MConverter.exe	63105da6abf6f34c

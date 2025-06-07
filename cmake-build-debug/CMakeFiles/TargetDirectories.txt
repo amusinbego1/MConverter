@@ -1,0 +1,3 @@
+C:/SREES/MConverter/cmake-build-debug/CMakeFiles/MConverter.dir
+C:/SREES/MConverter/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/SREES/MConverter/cmake-build-debug/CMakeFiles/rebuild_cache.dir
