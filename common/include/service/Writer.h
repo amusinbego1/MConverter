@@ -24,6 +24,10 @@ class Writer{
     void writeAdmittanceMatrix();
     void writePVBusParams();
     void writePQBusParams();
+    void writeNLEs();
+    void writePVBusNLEs();
+    void writeFP_i_Equation(int i);
+    void writeFP_ij_Equation(int i, int j);
 
 
 
