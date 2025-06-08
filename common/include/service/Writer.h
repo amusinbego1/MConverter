@@ -26,15 +26,18 @@ class Writer{
     void writePQBusParams();
     void writeNLEs();
     void writePVBusNLEs();
+    void writePQBusNLEs();
     void writeFP_i_Equation(int i);
+    void writeFQ_i_Equation(int i);
     void writeFP_ij_Equation(int i, int j);
+    void writeFQ_ij_Equation(int i, int j);
 
 
 
 public:
 
     explicit Writer(const MParser& parser):  parser_(parser), baseFilename_(extractBaseName(parser.filename())),
-        out(std::string(OUTPUT_PATH) + extractBaseName(parser.filename()) + ".txt"){
+        out(std::string(OUTPUT_PATH) + extractBaseName(parser.filename()) + ".dmodl"){
     }
 
     ~Writer() {

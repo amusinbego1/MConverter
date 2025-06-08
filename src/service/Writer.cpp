@@ -16,6 +16,7 @@ void Writer::write() {
     writeOutVariables();
     writeParams();
     writeNLEs();
+    out << "\nend";
 }
 
 void Writer::throwIfOutIsNotOpen() {
@@ -88,6 +89,7 @@ void Writer::writePQBusParams() {
 void Writer::writeNLEs() {
     out << "\nNLEs:\n";
     writePVBusNLEs();
+    writePQBusNLEs();
 }
 
 void Writer::writePVBusNLEs() {
@@ -98,6 +100,18 @@ void Writer::writePVBusNLEs() {
         out << "=Pg_" << i << "-Pd_" << i << "\n";
     }
 }
+
+void Writer::writePQBusNLEs() {
+    out << "\n\t//PQ Buses\n";
+    for(const auto& pq_bus: parser_.pq_buses()) {
+        int i = pq_bus.bus_i;
+        writeFP_i_Equation(i);
+        out << "=-Pd_" << i << "\n";
+        writeFQ_i_Equation(i);
+        out << "=-Qd_" << i << "\n";
+    }
+}
+
 
 void Writer::writeFP_i_Equation(int i) {
     //SLACK
@@ -119,6 +133,26 @@ void Writer::writeFP_i_Equation(int i) {
     }
 }
 
+void Writer::writeFQ_i_Equation(int i) {
+    //SLACK
+    int j = parser_.slack().bus_i;
+    out << "\t";
+    writeFQ_ij_Equation(i,j);
+
+    //PV Buses
+    for (const auto& nested_pv_bus: parser_.pv_buses()) {
+        j = nested_pv_bus.bus_i;
+        out << " + ";
+        writeFQ_ij_Equation(i, j);
+    }
+    //PQ Buses
+    for (const auto& nested_pq_bus: parser_.pq_buses()) {
+        j = nested_pq_bus.bus_i;
+        out << " + ";
+        writeFQ_ij_Equation(i, j);
+    }
+}
+
 
 
 void Writer::writeFP_ij_Equation(int i, int j) {
@@ -126,6 +160,10 @@ void Writer::writeFP_ij_Equation(int i, int j) {
             << "*cos(phi_" << i << "-theta_" << i << j << "-phi_" << j <<")";
 }
 
+void Writer::writeFQ_ij_Equation(int i, int j) {
+    out << "v_" << i << "*y_" << i << j << "*v_" << j
+            << "*sin(phi_" << i << "-theta_" << i << j << "-phi_" << j <<")";
+}
 
 
 
