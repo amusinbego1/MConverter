@@ -22,6 +22,8 @@ class Writer{
     void writeParams();
     void writeSlackParams();
     void writeAdmittanceMatrix();
+    void writePVBusParams();
+    void writePQBusParams();
 
 
 

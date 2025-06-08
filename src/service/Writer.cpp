@@ -49,10 +49,12 @@ void Writer::writeParams() {
     out << "\nParams:\n";
     writeSlackParams();
     writeAdmittanceMatrix();
+    writePVBusParams();
+    writePQBusParams();
 }
 
 void Writer::writeSlackParams() {
-    out <<"\n\t//Slack Buses\n";
+    out <<"\n\t//Slack Bus\n";
     out << "\tv_" << parser_.slack().bus_i << "=" << parser_.slack().Vm << "\n";
     out << "\tphi_" << parser_.slack().bus_i << "=" << parser_.slack().Va << "\n";
 }
@@ -64,6 +66,22 @@ void Writer::writeAdmittanceMatrix() {
             out << "\ty_" << i+1 << j+1 << "=" << std::abs(parser_.y()[i][j]) << "\n";
             out << "\ttheta_" << i+1 << j+1 << "=" << std::arg(parser_.y()[i][j]) << "\n";
         }
+}
+
+void Writer::writePVBusParams() {
+    out << "\n\t//PV Buses\n";
+    for(const auto& pv_bus: parser_.pv_buses()) {
+        out << "\tPg_" << pv_bus.bus_i << "=" << pv_bus.Pg << "\n";
+        out << "\tPd_" << pv_bus.bus_i << "=" << pv_bus.Pd << "\n";
+    }
+}
+
+void Writer::writePQBusParams() {
+    out <<"\n\t//PQ Buses\n";
+    for(const auto& pq_bus: parser_.pq_buses()) {
+        out << "\tPd_" << pq_bus.bus_i << "=" << pq_bus.Pd << "\n";
+        out << "\tQd_" << pq_bus.bus_i << "=" << pq_bus.Qd << "\n";
+    }
 }
 
 
