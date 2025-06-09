@@ -28,6 +28,10 @@ void Writer::throwIfOutIsNotOpen() {
 }
 
 void Writer::writeModalHeader(){
+    out << "Header:\n"
+        << "\tmaxIter=500\n"
+        << "\treport=AllDetails\n"
+        << "end\n";
     out << "Model [type=NL domain=real eps=1e-6 name=\"PF for " << baseFilename_ << "\"]:\n";
 }
 
@@ -35,9 +39,10 @@ void Writer::writeOutVariables() {
     out << "\nVars [out=true]:\n";
 
     out <<"\n\t//PV Buses\n";
+    SlackBus slack = parser_.slack();
     for(const auto& pv_bus: parser_.pv_buses()) {
-        out << "\tv_" << pv_bus.bus_i << "=" << pv_bus.Vm << "\n";
-        out << "\tphi_" << pv_bus.bus_i << "=" << pv_bus.Va << "\n";
+        out << "\tv_" << pv_bus.bus_i << "=" << slack.Vm << "\n";
+        out << "\tphi_" << pv_bus.bus_i << "=" << slack.Va << "\n";
     }
 
     out <<"\n\t//PQ Buses\n";
@@ -75,6 +80,7 @@ void Writer::writePVBusParams() {
     for(const auto& pv_bus: parser_.pv_buses()) {
         out << "\tPg_" << pv_bus.bus_i << "=" << pv_bus.Pg << "\n";
         out << "\tPd_" << pv_bus.bus_i << "=" << pv_bus.Pd << "\n";
+        out << "\tvsp_" << pv_bus.bus_i << "=" << pv_bus.Vm << "\n";
     }
 }
 
@@ -98,6 +104,7 @@ void Writer::writePVBusNLEs() {
         int i = pv_bus.bus_i;
         writeFP_i_Equation(i);
         out << "=Pg_" << i << "-Pd_" << i << "\n";
+        out << "\tv_" << i << "=vsp_" << i << "\n";
     }
 }
 
