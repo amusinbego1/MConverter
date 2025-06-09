@@ -62,16 +62,16 @@ void DMODLWriter::writeParams() {
 
 void DMODLWriter::writeSlackParams() {
     out <<"\n\t//Slack Bus\n";
-    out << "\tv_" << parser_.slack().bus_i << "=" << parser_.slack().Vm << "\n";
-    out << "\tphi_" << parser_.slack().bus_i << "=" << parser_.slack().Va << "\n";
+    out << "\tv_" << parser_.slack().bus_i << "=" << parser_.slack().Vm << " [out=true]\n";
+    out << "\tphi_" << parser_.slack().bus_i << "=" << parser_.slack().Va << " [out=true]\n";
 }
 
 void DMODLWriter::writeAdmittanceMatrix() {
     out << "\n\t//Admittance Matrix\n";
     for(int i=0; i<parser_.y().size(); i++)
         for (int j=0; j<parser_.y()[i].size(); j++) {
-            out << "\ty_" << i+1 << j+1 << "=" << std::abs(parser_.y()[i][j]) << "\n";
-            out << "\ttheta_" << i+1 << j+1 << "=" << std::arg(parser_.y()[i][j]) << "\n";
+            out << "\ty_" << i+1 << "_" << j+1 << "=" << std::abs(parser_.y()[i][j]) << "\n";
+            out << "\ttheta_" << i+1 << "_" << j+1 << "=" << std::arg(parser_.y()[i][j]) << "\n";
         }
 }
 
@@ -163,13 +163,13 @@ void DMODLWriter::writeFQ_i_Equation(int i) {
 
 
 void DMODLWriter::writeFP_ij_Equation(int i, int j) {
-    out << "v_" << i << "*y_" << i << j << "*v_" << j
-            << "*cos(phi_" << i << "-theta_" << i << j << "-phi_" << j <<")";
+    out << "v_" << i << "*y_" << i << "_" << j << "*v_" << j
+            << "*cos(phi_" << i << "-theta_" << i << "_" << j << "-phi_" << j <<")";
 }
 
 void DMODLWriter::writeFQ_ij_Equation(int i, int j) {
-    out << "v_" << i << "*y_" << i << j << "*v_" << j
-            << "*sin(phi_" << i << "-theta_" << i << j << "-phi_" << j <<")";
+    out << "v_" << i << "*y_" << i << "_" << j << "*v_" << j
+            << "*sin(phi_" << i << "-theta_" << i << "_" << j << "-phi_" << j <<")";
 }
 
 

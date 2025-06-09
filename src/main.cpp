@@ -20,6 +20,7 @@ int main()
     writer.write();
 
     std::cout << "\n.m file successfully converted to .dmodl file.\n";
+    std::cout << "Press any key to exit...";
     std::cin.get();
     return 0;
 }
