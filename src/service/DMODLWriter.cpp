@@ -2,14 +2,14 @@
 // Created by Amer on 7. 6. 2025..
 //
 
-#include "service/Writer.h"
+#include "service/DMODLWriter.h"
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <string>
 
 
-void Writer::write() {
+void DMODLWriter::write() {
     out << std::fixed << std::setprecision(6);
     throwIfOutIsNotOpen();
     writeModalHeader();
@@ -19,7 +19,7 @@ void Writer::write() {
     out << "\nend";
 }
 
-void Writer::throwIfOutIsNotOpen() {
+void DMODLWriter::throwIfOutIsNotOpen() {
     if (!out.is_open()) {
         std::string message = "Failed to open file for writing: " + baseFilename_ ;
         std::cerr << message << std::endl;
@@ -27,15 +27,15 @@ void Writer::throwIfOutIsNotOpen() {
     }
 }
 
-void Writer::writeModalHeader(){
+void DMODLWriter::writeModalHeader(){
     out << "Header:\n"
-        << "\tmaxIter=500\n"
+        << "\tmaxIter=" << maxIter_ << "\n"
         << "\treport=AllDetails\n"
         << "end\n";
-    out << "Model [type=NL domain=real eps=1e-6 name=\"PF for " << baseFilename_ << "\"]:\n";
+    out << "Model [type=NL domain=real eps=" << eps_ << " name=\"PF for " << baseFilename_ << "\"]:\n";
 }
 
-void Writer::writeOutVariables() {
+void DMODLWriter::writeOutVariables() {
     out << "\nVars [out=true]:\n";
 
     out <<"\n\t//PV Buses\n";
@@ -52,7 +52,7 @@ void Writer::writeOutVariables() {
     }
 }
 
-void Writer::writeParams() {
+void DMODLWriter::writeParams() {
     out << "\nParams:\n";
     writeSlackParams();
     writeAdmittanceMatrix();
@@ -60,13 +60,13 @@ void Writer::writeParams() {
     writePQBusParams();
 }
 
-void Writer::writeSlackParams() {
+void DMODLWriter::writeSlackParams() {
     out <<"\n\t//Slack Bus\n";
     out << "\tv_" << parser_.slack().bus_i << "=" << parser_.slack().Vm << "\n";
     out << "\tphi_" << parser_.slack().bus_i << "=" << parser_.slack().Va << "\n";
 }
 
-void Writer::writeAdmittanceMatrix() {
+void DMODLWriter::writeAdmittanceMatrix() {
     out << "\n\t//Admittance Matrix\n";
     for(int i=0; i<parser_.y().size(); i++)
         for (int j=0; j<parser_.y()[i].size(); j++) {
@@ -75,7 +75,7 @@ void Writer::writeAdmittanceMatrix() {
         }
 }
 
-void Writer::writePVBusParams() {
+void DMODLWriter::writePVBusParams() {
     out << "\n\t//PV Buses\n";
     for(const auto& pv_bus: parser_.pv_buses()) {
         out << "\tPg_" << pv_bus.bus_i << "=" << pv_bus.Pg << "\n";
@@ -84,7 +84,7 @@ void Writer::writePVBusParams() {
     }
 }
 
-void Writer::writePQBusParams() {
+void DMODLWriter::writePQBusParams() {
     out <<"\n\t//PQ Buses\n";
     for(const auto& pq_bus: parser_.pq_buses()) {
         out << "\tPd_" << pq_bus.bus_i << "=" << pq_bus.Pd << "\n";
@@ -92,13 +92,13 @@ void Writer::writePQBusParams() {
     }
 }
 
-void Writer::writeNLEs() {
+void DMODLWriter::writeNLEs() {
     out << "\nNLEs:\n";
     writePVBusNLEs();
     writePQBusNLEs();
 }
 
-void Writer::writePVBusNLEs() {
+void DMODLWriter::writePVBusNLEs() {
     out << "\n\t//PV Buses\n";
     for(const auto& pv_bus: parser_.pv_buses()) {
         int i = pv_bus.bus_i;
@@ -108,7 +108,7 @@ void Writer::writePVBusNLEs() {
     }
 }
 
-void Writer::writePQBusNLEs() {
+void DMODLWriter::writePQBusNLEs() {
     out << "\n\t//PQ Buses\n";
     for(const auto& pq_bus: parser_.pq_buses()) {
         int i = pq_bus.bus_i;
@@ -120,7 +120,7 @@ void Writer::writePQBusNLEs() {
 }
 
 
-void Writer::writeFP_i_Equation(int i) {
+void DMODLWriter::writeFP_i_Equation(int i) {
     //SLACK
     int j = parser_.slack().bus_i;
     out << "\t";
@@ -140,7 +140,7 @@ void Writer::writeFP_i_Equation(int i) {
     }
 }
 
-void Writer::writeFQ_i_Equation(int i) {
+void DMODLWriter::writeFQ_i_Equation(int i) {
     //SLACK
     int j = parser_.slack().bus_i;
     out << "\t";
@@ -162,19 +162,19 @@ void Writer::writeFQ_i_Equation(int i) {
 
 
 
-void Writer::writeFP_ij_Equation(int i, int j) {
+void DMODLWriter::writeFP_ij_Equation(int i, int j) {
     out << "v_" << i << "*y_" << i << j << "*v_" << j
             << "*cos(phi_" << i << "-theta_" << i << j << "-phi_" << j <<")";
 }
 
-void Writer::writeFQ_ij_Equation(int i, int j) {
+void DMODLWriter::writeFQ_ij_Equation(int i, int j) {
     out << "v_" << i << "*y_" << i << j << "*v_" << j
             << "*sin(phi_" << i << "-theta_" << i << j << "-phi_" << j <<")";
 }
 
 
 
-std::string Writer::extractBaseName(const std::string& filepath) {
+std::string DMODLWriter::extractBaseName(const std::string& filepath) {
     size_t lastSlash = filepath.find_last_of("/\\");
     size_t lastDot = filepath.find_last_of('.');
 

@@ -9,10 +9,12 @@
 #include <fstream>
 
 
-class Writer{
+class DMODLWriter{
     MParser parser_;
     std::string baseFilename_;
     std::ofstream out;
+    int maxIter_;
+    double eps_;
 
     static std::string extractBaseName(const std::string& filepath);
     void throwIfOutIsNotOpen();
@@ -36,11 +38,12 @@ class Writer{
 
 public:
 
-    explicit Writer(const MParser& parser):  parser_(parser), baseFilename_(extractBaseName(parser.filename())),
-        out(std::string(OUTPUT_PATH) + extractBaseName(parser.filename()) + ".dmodl"){
-    }
+    explicit DMODLWriter(const MParser& parser, int maxIter, double eps):  parser_(parser), baseFilename_(extractBaseName(parser.filename())),
+        out(std::string(OUTPUT_PATH) + extractBaseName(parser.filename()) + ".dmodl"),
+        maxIter_(maxIter),
+        eps_(eps){}
 
-    ~Writer() {
+    ~DMODLWriter() {
         out.close();
     }
 

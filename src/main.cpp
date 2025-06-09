@@ -1,55 +1,67 @@
 #include <iomanip>
 #include <iostream>
 #include "service/MParser.h"
-#include "service/Writer.h"
+#include "service/DMODLWriter.h"
+
+void input(std::string&, int&, double&);
+
 
 int main()
 {
+    int maxIter = 50;
+    double eps = 1e-6;
     std::string caseName;
-    std::cout << "Enter MATPOWER .m filename (without .m): ";
-    std::cin >> caseName;
+
+    input(caseName, maxIter, eps);
 
     MParser parser(caseName);
 
-    std::cout << std::fixed << std::setprecision(6);
-    std::cout << "\nSlack Bus:\n";
-    std::cout << "Bus " << parser.slack().bus_i << " | Vm = " << parser.slack().Vm << " p.u. | Va = " << parser.slack().Va << "\u00b0\n";
-
-    std::cout << "\nPV Buses:\n";
-    for (const auto& bus : parser.pv_buses()) {
-        std::cout << "Bus " << bus.bus_i
-             << " | Pd = " << bus.Pd << " p.u."
-             << " | Qd = " << bus.Qd << " p.u."
-             << " | Pg = " << bus.Pg << " p.u."
-             << " | Qg = " << bus.Qg << " p.u."
-             << " | Pmax = " << bus.Pmax << " p.u."
-             << " | Pmin = " << bus.Pmin << " p.u."
-             << " | Qmax = " << bus.Qmax << " p.u."
-             << " | Qmin = " << bus.Qmin << " p.u."
-             << " | Vm = " << bus.Vm
-             << " | Va = " << bus.Va << "\u00b0\n";
-    }
-
-    std::cout << "\nPQ Buses:\n";
-    for (const auto& bus : parser.pq_buses()) {
-        std::cout << "Bus " << bus.bus_i
-             << " | Pd = " << bus.Pd << " p.u."
-             << " | Qd = " << bus.Qd << " p.u."
-             << " | Vm = " << bus.Vm
-             << " | Va = " << bus.Va << "\u00b0\n";
-    }
-
-    std::cout << "\nYbus (Nodal Admittance Matrix):\n";
-    for (int i = 0; i < parser.number_of_nodes1(); ++i) {
-        for (int j = 0; j < parser.number_of_nodes1(); ++j) {
-            std::cout << "(" << std::abs(parser.y()[i][j]) << " <" << std::arg(parser.y()[i][j]) << " rad) ";
-        }
-        std::cout << "\n";
-    }
-
-    Writer writer(parser);
+    DMODLWriter writer(parser, maxIter, eps);
     writer.write();
 
-
+    std::cout << "\n.m file successfully converted to .dmodl file.\n";
+    std::cin.get();
     return 0;
 }
+
+void inputCaseName(std::string& caseName);
+void inputMaxIterations(int&);
+void inputEps(double&);
+
+void input(std::string& caseName, int& maxIter, double& eps) {
+    inputCaseName(caseName);
+    inputMaxIterations(maxIter);
+    inputEps(eps);
+}
+
+void inputCaseName(std::string& caseName) {
+    std::cout << "Enter MATPOWER .m filename (without .m): ";
+    std::getline(std::cin, caseName);
+}
+
+void inputMaxIterations(int & maxIter) {
+    std::string line;
+
+    std::cout << "Enter \"maxIter\" (default " << maxIter << "): ";
+    std::getline(std::cin, line);
+    if (!line.empty()) {
+        std::istringstream iss(line);
+        if (!(iss >> maxIter)) {
+            std::cerr << "Invalid integer input, keeping default " << maxIter << ".\n";
+        }
+    }
+}
+
+void inputEps(double &eps) {
+    std::string line;
+
+    std::cout << "Enter \"eps\" (default " << eps << "): ";
+    std::getline(std::cin, line);
+    if (!line.empty()) {
+        std::istringstream iss(line);
+        if (!(iss >> eps)) {
+            std::cerr << "Invalid double input, keeping default " << eps << ".\n";
+        }
+    }
+}
+
