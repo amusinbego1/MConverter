@@ -70,10 +70,17 @@ void DMODLWriter::writeAdmittanceMatrix() {
     out << "\n\t//Admittance Matrix\n";
     for(int i=0; i<parser_.y().size(); i++)
         for (int j=0; j<parser_.y()[i].size(); j++) {
-            out << "\ty_" << i+1 << "_" << j+1 << "=" << std::abs(parser_.y()[i][j]) << "\n";
-            out << "\ttheta_" << i+1 << "_" << j+1 << "=" << std::arg(parser_.y()[i][j]) << "\n";
+            if(shouldParamBeIncluded(i, j)) {
+                out << "\ty_" << i+1 << "_" << j+1 << "=" << std::abs(parser_.y()[i][j]) << "\n";
+                out << "\ttheta_" << i+1 << "_" << j+1 << "=" << std::arg(parser_.y()[i][j]) << "\n";
+            }
         }
 }
+
+bool DMODLWriter::shouldParamBeIncluded(int i, int j) const {
+    return std::abs(parser_.y()[i][j]) > eps_;
+}
+
 
 void DMODLWriter::writePVBusParams() {
     out << "\n\t//PV Buses\n";
@@ -103,8 +110,9 @@ void DMODLWriter::writePVBusNLEs() {
     for(const auto& pv_bus: parser_.pv_buses()) {
         int i = pv_bus.bus_i;
         writeFP_i_Equation(i);
-        out << "=Pg_" << i << "-Pd_" << i << "\n";
-        out << "\tv_" << i << "=vsp_" << i << "\n";
+        out.seekp(-2, std::ios_base::cur);
+        out << "= Pg_" << i << "-Pd_" << i << "\n";
+        out << "\tv_" << i << " = vsp_" << i << "\n";
     }
 }
 
@@ -113,9 +121,11 @@ void DMODLWriter::writePQBusNLEs() {
     for(const auto& pq_bus: parser_.pq_buses()) {
         int i = pq_bus.bus_i;
         writeFP_i_Equation(i);
-        out << "=-Pd_" << i << "\n";
+        out.seekp(-2, std::ios_base::cur);
+        out << "= -Pd_" << i << "\n";
         writeFQ_i_Equation(i);
-        out << "=-Qd_" << i << "\n";
+        out.seekp(-2, std::ios_base::cur);
+        out << "= -Qd_" << i << "\n";
     }
 }
 
@@ -124,19 +134,20 @@ void DMODLWriter::writeFP_i_Equation(int i) {
     //SLACK
     int j = parser_.slack().bus_i;
     out << "\t";
-    writeFP_ij_Equation(i,j);
+    if(shouldParamBeIncluded(i-1, j-1))
+        writeF_ij_Equation(i,j, TrigFunction::COS);
 
     //PV Buses
     for (const auto& nested_pv_bus: parser_.pv_buses()) {
         j = nested_pv_bus.bus_i;
-        out << " + ";
-        writeFP_ij_Equation(i, j);
+        if(shouldParamBeIncluded(i-1, j-1))
+           writeF_ij_Equation(i, j, TrigFunction::COS);
     }
     //PQ Buses
     for (const auto& nested_pq_bus: parser_.pq_buses()) {
         j = nested_pq_bus.bus_i;
-        out << " + ";
-        writeFP_ij_Equation(i, j);
+        if(shouldParamBeIncluded(i-1, j-1))
+            writeF_ij_Equation(i, j, TrigFunction::COS);
     }
 }
 
@@ -144,32 +155,37 @@ void DMODLWriter::writeFQ_i_Equation(int i) {
     //SLACK
     int j = parser_.slack().bus_i;
     out << "\t";
-    writeFQ_ij_Equation(i,j);
+    if(shouldParamBeIncluded(i-1, j-1))
+        writeF_ij_Equation(i,j, TrigFunction::SIN);
 
     //PV Buses
     for (const auto& nested_pv_bus: parser_.pv_buses()) {
         j = nested_pv_bus.bus_i;
-        out << " + ";
-        writeFQ_ij_Equation(i, j);
+        if(shouldParamBeIncluded(i-1, j-1))
+            writeF_ij_Equation(i, j, TrigFunction::SIN);
     }
     //PQ Buses
     for (const auto& nested_pq_bus: parser_.pq_buses()) {
         j = nested_pq_bus.bus_i;
-        out << " + ";
-        writeFQ_ij_Equation(i, j);
+        if(shouldParamBeIncluded(i-1, j-1))
+            writeF_ij_Equation(i, j, TrigFunction::SIN);
     }
 }
 
 
 
-void DMODLWriter::writeFP_ij_Equation(int i, int j) {
+void DMODLWriter::writeF_ij_Equation(int i, int j, TrigFunction trig_function) {
     out << "v_" << i << "*y_" << i << "_" << j << "*v_" << j
-            << "*cos(phi_" << i << "-theta_" << i << "_" << j << "-phi_" << j <<")";
+            << "*" << trig_function << "(phi_" << i << "-theta_" << i << "_" << j << "-phi_" << j <<") + ";
 }
 
-void DMODLWriter::writeFQ_ij_Equation(int i, int j) {
-    out << "v_" << i << "*y_" << i << "_" << j << "*v_" << j
-            << "*sin(phi_" << i << "-theta_" << i << "_" << j << "-phi_" << j <<")";
+
+std::ostream &operator<<(std::ostream &out, DMODLWriter::TrigFunction trig_function){
+    switch(trig_function) {
+        case DMODLWriter::TrigFunction::COS: out << "cos"; break;
+        case DMODLWriter::TrigFunction::SIN: out << "sin"; break;
+    }
+    return out;
 }
 
 

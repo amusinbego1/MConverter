@@ -16,7 +16,14 @@ class DMODLWriter{
     int maxIter_;
     double eps_;
 
+    enum TrigFunction {
+        SIN, COS
+    };
+
+    friend std::ostream& operator<<(std::ostream&, TrigFunction);
+
     static std::string extractBaseName(const std::string& filepath);
+    [[nodiscard]] bool shouldParamBeIncluded(int i, int j) const;
     void throwIfOutIsNotOpen();
 
     void writeModalHeader();
@@ -31,8 +38,7 @@ class DMODLWriter{
     void writePQBusNLEs();
     void writeFP_i_Equation(int i);
     void writeFQ_i_Equation(int i);
-    void writeFP_ij_Equation(int i, int j);
-    void writeFQ_ij_Equation(int i, int j);
+    void writeF_ij_Equation(int i, int j, TrigFunction trig_function);
 
 
 
