@@ -20,6 +20,10 @@ class DMODLWriter{
         SIN, COS
     };
 
+    enum EquationType {
+        Q, P
+    };
+
     friend std::ostream& operator<<(std::ostream&, TrigFunction);
 
     static std::string extractBaseName(const std::string& filepath);
@@ -38,7 +42,12 @@ class DMODLWriter{
     void writePQBusNLEs();
     void writeFP_i_Equation(int i);
     void writeFQ_i_Equation(int i);
+    void writeEquationWithSlack(int i, EquationType);
+    void writeEquationWithPV(int i, EquationType);
+    void writeEquationWithPQ(int i, EquationType);
+
     void writeF_ij_Equation(int i, int j, TrigFunction trig_function);
+    void rewriteEqualOverPlusSign();
 
 
 

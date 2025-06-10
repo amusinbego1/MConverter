@@ -110,8 +110,8 @@ void DMODLWriter::writePVBusNLEs() {
     for(const auto& pv_bus: parser_.pv_buses()) {
         int i = pv_bus.bus_i;
         writeFP_i_Equation(i);
-        out.seekp(-2, std::ios_base::cur);
-        out << "= Pg_" << i << "-Pd_" << i << "\n";
+        rewriteEqualOverPlusSign();
+        out << "Pg_" << i << "-Pd_" << i << "\n";
         out << "\tv_" << i << " = vsp_" << i << "\n";
     }
 }
@@ -121,64 +121,58 @@ void DMODLWriter::writePQBusNLEs() {
     for(const auto& pq_bus: parser_.pq_buses()) {
         int i = pq_bus.bus_i;
         writeFP_i_Equation(i);
-        out.seekp(-2, std::ios_base::cur);
-        out << "= -Pd_" << i << "\n";
+        rewriteEqualOverPlusSign();
+        out << "-Pd_" << i << "\n";
         writeFQ_i_Equation(i);
-        out.seekp(-2, std::ios_base::cur);
-        out << "= -Qd_" << i << "\n";
+        rewriteEqualOverPlusSign();
+        out << "-Qd_" << i << "\n";
     }
 }
 
-
 void DMODLWriter::writeFP_i_Equation(int i) {
-    //SLACK
-    int j = parser_.slack().bus_i;
-    out << "\t";
-    if(shouldParamBeIncluded(i-1, j-1))
-        writeF_ij_Equation(i,j, TrigFunction::COS);
-
-    //PV Buses
-    for (const auto& nested_pv_bus: parser_.pv_buses()) {
-        j = nested_pv_bus.bus_i;
-        if(shouldParamBeIncluded(i-1, j-1))
-           writeF_ij_Equation(i, j, TrigFunction::COS);
-    }
-    //PQ Buses
-    for (const auto& nested_pq_bus: parser_.pq_buses()) {
-        j = nested_pq_bus.bus_i;
-        if(shouldParamBeIncluded(i-1, j-1))
-            writeF_ij_Equation(i, j, TrigFunction::COS);
-    }
+    writeEquationWithSlack(i, EquationType::P);
+    writeEquationWithPV(i, EquationType::P);
+    writeEquationWithPQ(i, EquationType::P);
 }
 
 void DMODLWriter::writeFQ_i_Equation(int i) {
-    //SLACK
+    writeEquationWithSlack(i, EquationType::Q);
+    writeEquationWithPV(i, EquationType::Q);
+    writeEquationWithPQ(i, EquationType::Q);
+}
+
+void DMODLWriter::rewriteEqualOverPlusSign() {
+    out.seekp(-2, std::ios_base::cur);
+    out << "= ";
+}
+
+void DMODLWriter::writeEquationWithSlack(int i, EquationType eqType) {
     int j = parser_.slack().bus_i;
     out << "\t";
     if(shouldParamBeIncluded(i-1, j-1))
-        writeF_ij_Equation(i,j, TrigFunction::SIN);
+        writeF_ij_Equation(i,j, TrigFunction(eqType));
+}
 
-    //PV Buses
+void DMODLWriter::writeEquationWithPV(int i, EquationType eqType) {
     for (const auto& nested_pv_bus: parser_.pv_buses()) {
-        j = nested_pv_bus.bus_i;
+        int j = nested_pv_bus.bus_i;
         if(shouldParamBeIncluded(i-1, j-1))
-            writeF_ij_Equation(i, j, TrigFunction::SIN);
-    }
-    //PQ Buses
-    for (const auto& nested_pq_bus: parser_.pq_buses()) {
-        j = nested_pq_bus.bus_i;
-        if(shouldParamBeIncluded(i-1, j-1))
-            writeF_ij_Equation(i, j, TrigFunction::SIN);
+            writeF_ij_Equation(i, j, TrigFunction(eqType));
     }
 }
 
-
+void DMODLWriter::writeEquationWithPQ(int i, EquationType eqType) {
+    for (const auto& nested_pq_bus: parser_.pq_buses()) {
+        int j = nested_pq_bus.bus_i;
+        if(shouldParamBeIncluded(i-1, j-1))
+            writeF_ij_Equation(i, j, TrigFunction(eqType));
+    }
+}
 
 void DMODLWriter::writeF_ij_Equation(int i, int j, TrigFunction trig_function) {
     out << "v_" << i << "*y_" << i << "_" << j << "*v_" << j
             << "*" << trig_function << "(phi_" << i << "-theta_" << i << "_" << j << "-phi_" << j <<") + ";
 }
-
 
 std::ostream &operator<<(std::ostream &out, DMODLWriter::TrigFunction trig_function){
     switch(trig_function) {
@@ -187,8 +181,6 @@ std::ostream &operator<<(std::ostream &out, DMODLWriter::TrigFunction trig_funct
     }
     return out;
 }
-
-
 
 std::string DMODLWriter::extractBaseName(const std::string& filepath) {
     size_t lastSlash = filepath.find_last_of("/\\");
