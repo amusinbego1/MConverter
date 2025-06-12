@@ -9,7 +9,7 @@ ConfigXmlParser::ConfigXmlParser():defaultConfig_({"v", "phi", "y", "theta", tru
 Config ConfigXmlParser::parse(){
     Config config = defaultConfig_;
 
-    if (!parser_.parseFile(td::String("config.xml")))
+    if (!parser_.parseFile(td::String("resources/config.xml")))
         return config;
 
     auto root = parser_.getRootNode();

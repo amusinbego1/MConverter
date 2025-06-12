@@ -38,14 +38,15 @@ void DMODLWriter::writeModalHeader(){
 void DMODLWriter::writeOutVariables() {
     out << "\nVars [out=true]:\n";
 
-    out <<"\n\t//PV Buses\n";
+    out <<"\n"; writeComment("PV Buses");
+
     SlackBus slack = parser_.slack();
     for(const auto& pv_bus: parser_.pv_buses()) {
         out << "\t" << config_.v_symbol << "_" << pv_bus.bus_i << "=" << slack.Vm;
         out << "; " << config_.phi_symbol <<"_" << pv_bus.bus_i << "=" << slack.Va << "\n";
     }
 
-    out <<"\n\t//PQ Buses\n";
+    out <<"\n"; writeComment("PQ Buses");
     for(const auto& pq_bus: parser_.pq_buses()) {
         out << "\t" << config_.v_symbol << "_" <<  pq_bus.bus_i << "=" << pq_bus.Vm;
         out << "; " << config_.phi_symbol <<"_" << pq_bus.bus_i << "=" << pq_bus.Va << "\n";
@@ -61,13 +62,13 @@ void DMODLWriter::writeParams() {
 }
 
 void DMODLWriter::writeSlackParams() {
-    out <<"\n\t//Slack Bus\n";
+    out <<"\n"; writeComment("Slack Bus");
     out << "\t" << config_.v_symbol << "_" << parser_.slack().bus_i << "=" << parser_.slack().Vm << " [out=true]";
     out << "; " << config_.phi_symbol <<"_" << parser_.slack().bus_i << "=" << parser_.slack().Va << " [out=true]\n";
 }
 
 void DMODLWriter::writeAdmittanceMatrix() {
-    out << "\n\t//Admittance Matrix\n";
+    out << "\n"; writeComment("Admittance Matrix");
     for (const auto& entry : parser_.y()) {
         int i = entry.first.first;
         int j = entry.first.second;
@@ -83,7 +84,7 @@ bool DMODLWriter::shouldParamBeIncluded(int i, int j) const {
 }
 
 void DMODLWriter::writePVBusParams() {
-    out << "\n\t//PV Buses\n";
+    out << "\n"; writeComment("PV Buses");
     for(const auto& pv_bus: parser_.pv_buses()) {
         out << "\tPg_" << pv_bus.bus_i << "=" << pv_bus.Pg;
         out << "; Pd_" << pv_bus.bus_i << "=" << pv_bus.Pd;
@@ -92,7 +93,7 @@ void DMODLWriter::writePVBusParams() {
 }
 
 void DMODLWriter::writePQBusParams() {
-    out <<"\n\t//PQ Buses\n";
+    out <<"\n"; writeComment("PQ Buses");
     for(const auto& pq_bus: parser_.pq_buses()) {
         out << "\tPd_" << pq_bus.bus_i << "=" << pq_bus.Pd;
         out << "; Qd_" << pq_bus.bus_i << "=" << pq_bus.Qd << "\n";
@@ -106,18 +107,18 @@ void DMODLWriter::writeNLEs() {
 }
 
 void DMODLWriter::writePVBusNLEs() {
-    out << "\n\t//PV Buses\n";
+    out << "\n"; writeComment("PV Buses");
     for(const auto& pv_bus: parser_.pv_buses()) {
         int i = pv_bus.bus_i;
         writeFP_i_Equation(i);
         rewriteEqualOverPlusSign();
         out << "Pg_" << i << "-Pd_" << i << "\n";
-        out << "\t" << config_.v_symbol << "_" << i << " = vsp_" << i << "\n";
+        out << "\t" << config_.v_symbol << "_" << i << " = vsp_" << i << "\n\n";
     }
 }
 
 void DMODLWriter::writePQBusNLEs() {
-    out << "\n\t//PQ Buses\n";
+    out <<"\n"; writeComment("PQ Buses");
     for(const auto& pq_bus: parser_.pq_buses()) {
         int i = pq_bus.bus_i;
         writeFP_i_Equation(i);
@@ -125,7 +126,7 @@ void DMODLWriter::writePQBusNLEs() {
         out << "-Pd_" << i << "\n";
         writeFQ_i_Equation(i);
         rewriteEqualOverPlusSign();
-        out << "-Qd_" << i << "\n";
+        out << "-Qd_" << i << "\n\n";
     }
 }
 
@@ -173,6 +174,12 @@ void DMODLWriter::writeF_ij_Equation(int i, int j, TrigFunction trig_function) {
     out << config_.v_symbol << "_" << i << "*" << config_.y_symbol << "_" << i << "_" << j << "*" << config_.v_symbol << "_" << j
             << "*" << trig_function << "(" << config_.phi_symbol << "_" << i << "-" << config_.theta_symbol << "_" << i << "_" << j << "-" << config_.phi_symbol << "_" << j <<") + ";
 }
+
+void DMODLWriter::writeComment(const char *comment) {
+    if (config_.comments_included)
+        out << "\t//" << comment << "\n";
+}
+
 
 std::ostream &operator<<(std::ostream &out, DMODLWriter::TrigFunction trig_function){
     switch(trig_function) {
