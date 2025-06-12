@@ -66,7 +66,7 @@ public:
         return branches_;
     }
 
-    [[nodiscard]] const std::map<std::pair<int, int>, std::complex<double>>& MParser::y() const {
+    [[nodiscard]] const std::map<std::pair<int, int>, std::complex<double>>& y() const {
         return Y_;
     }
 

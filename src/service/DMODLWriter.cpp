@@ -41,14 +41,14 @@ void DMODLWriter::writeOutVariables() {
     out <<"\n\t//PV Buses\n";
     SlackBus slack = parser_.slack();
     for(const auto& pv_bus: parser_.pv_buses()) {
-        out << "\tv_" << pv_bus.bus_i << "=" << slack.Vm << "\n";
-        out << "\tphi_" << pv_bus.bus_i << "=" << slack.Va << "\n";
+        out << "\tv_" << pv_bus.bus_i << "=" << slack.Vm;
+        out << "; phi_" << pv_bus.bus_i << "=" << slack.Va << "\n";
     }
 
     out <<"\n\t//PQ Buses\n";
     for(const auto& pq_bus: parser_.pq_buses()) {
-        out << "\tv_" << pq_bus.bus_i << "=" << pq_bus.Vm << "\n";
-        out << "\tphi_" << pq_bus.bus_i << "=" << pq_bus.Va << "\n";
+        out << "\tv_" << pq_bus.bus_i << "=" << pq_bus.Vm;
+        out << "; phi_" << pq_bus.bus_i << "=" << pq_bus.Va << "\n";
     }
 }
 
@@ -62,8 +62,8 @@ void DMODLWriter::writeParams() {
 
 void DMODLWriter::writeSlackParams() {
     out <<"\n\t//Slack Bus\n";
-    out << "\tv_" << parser_.slack().bus_i << "=" << parser_.slack().Vm << " [out=true]\n";
-    out << "\tphi_" << parser_.slack().bus_i << "=" << parser_.slack().Va << " [out=true]\n";
+    out << "\tv_" << parser_.slack().bus_i << "=" << parser_.slack().Vm << " [out=true]";
+    out << "; phi_" << parser_.slack().bus_i << "=" << parser_.slack().Va << " [out=true]\n";
 }
 
 void DMODLWriter::writeAdmittanceMatrix() {
@@ -72,8 +72,8 @@ void DMODLWriter::writeAdmittanceMatrix() {
         int i = entry.first.first;
         int j = entry.first.second;
         const std::complex<double>& y_ij = entry.second;
-        out << "\ty_" << i<< "_" << j << "=" << std::abs(y_ij) << "\n";
-        out << "\ttheta_" << i << "_" << j << "=" << std::arg(y_ij) << "\n";
+        out << "\ty_" << i<< "_" << j << "=" << std::abs(y_ij);
+        out << "; theta_" << i << "_" << j << "=" << std::arg(y_ij) << "\n";
     }
 }
 
