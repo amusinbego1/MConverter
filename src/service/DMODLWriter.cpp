@@ -68,19 +68,19 @@ void DMODLWriter::writeSlackParams() {
 
 void DMODLWriter::writeAdmittanceMatrix() {
     out << "\n\t//Admittance Matrix\n";
-    for(int i=0; i<parser_.y().size(); i++)
-        for (int j=0; j<parser_.y()[i].size(); j++) {
-            if(shouldParamBeIncluded(i, j)) {
-                out << "\ty_" << i+1 << "_" << j+1 << "=" << std::abs(parser_.y()[i][j]) << "\n";
-                out << "\ttheta_" << i+1 << "_" << j+1 << "=" << std::arg(parser_.y()[i][j]) << "\n";
-            }
-        }
+    for (const auto& entry : parser_.y()) {
+        int i = entry.first.first;
+        int j = entry.first.second;
+        const std::complex<double>& y_ij = entry.second;
+        out << "\ty_" << i<< "_" << j << "=" << std::abs(y_ij) << "\n";
+        out << "\ttheta_" << i << "_" << j << "=" << std::arg(y_ij) << "\n";
+    }
 }
 
 bool DMODLWriter::shouldParamBeIncluded(int i, int j) const {
-    return std::abs(parser_.y()[i][j]) > eps_;
+    auto it = parser_.y().find({i, j});
+    return it != parser_.y().end();
 }
-
 
 void DMODLWriter::writePVBusParams() {
     out << "\n\t//PV Buses\n";
@@ -149,14 +149,14 @@ void DMODLWriter::rewriteEqualOverPlusSign() {
 void DMODLWriter::writeEquationWithSlack(int i, EquationType eqType) {
     int j = parser_.slack().bus_i;
     out << "\t";
-    if(shouldParamBeIncluded(i-1, j-1))
+    if(shouldParamBeIncluded(i, j))
         writeF_ij_Equation(i,j, TrigFunction(eqType));
 }
 
 void DMODLWriter::writeEquationWithPV(int i, EquationType eqType) {
     for (const auto& nested_pv_bus: parser_.pv_buses()) {
         int j = nested_pv_bus.bus_i;
-        if(shouldParamBeIncluded(i-1, j-1))
+        if(shouldParamBeIncluded(i, j))
             writeF_ij_Equation(i, j, TrigFunction(eqType));
     }
 }
@@ -164,7 +164,7 @@ void DMODLWriter::writeEquationWithPV(int i, EquationType eqType) {
 void DMODLWriter::writeEquationWithPQ(int i, EquationType eqType) {
     for (const auto& nested_pq_bus: parser_.pq_buses()) {
         int j = nested_pq_bus.bus_i;
-        if(shouldParamBeIncluded(i-1, j-1))
+        if(shouldParamBeIncluded(i, j))
             writeF_ij_Equation(i, j, TrigFunction(eqType));
     }
 }

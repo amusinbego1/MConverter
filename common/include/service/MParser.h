@@ -5,6 +5,7 @@
 #ifndef MPARSER_H
 #define MPARSER_H
 #include <complex>
+#include <map>
 #include <unordered_map>
 #include <vector>
 
@@ -22,7 +23,7 @@ class MParser{
     std::vector<PVBus> pv_buses_;
     std::vector<PQBus> pq_buses_;
     std::vector<Branch> branches_;
-    std::vector<std::vector<std::complex<double>>> Y_;
+    std::map<std::pair<int, int>, std::complex<double>> Y_;
     std::string filename_;
 
     void parseBaseMVA();
@@ -35,8 +36,7 @@ class MParser{
 
 public:
     explicit MParser(const std::string& filename)
-        : filename_("resources/data/" + filename + ".m"),
-          Y_(100, std::vector<std::complex<double>>(100, {0.0, 0.0})){
+        : filename_("resources/data/" + filename + ".m"){
         parse();
     }
 
@@ -66,7 +66,7 @@ public:
         return branches_;
     }
 
-    [[nodiscard]] std::vector<std::vector<std::complex<double>>> y() const {
+    [[nodiscard]] const std::map<std::pair<int, int>, std::complex<double>>& MParser::y() const {
         return Y_;
     }
 

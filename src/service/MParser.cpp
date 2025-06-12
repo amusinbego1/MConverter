@@ -63,7 +63,6 @@ void MParser::parseSlackBus() {
             if (values.size() >= 9) {
                 int bus_i = static_cast<int>(values[0]);
                 int type = static_cast<int>(values[1]);
-                double Vm = values[7];
                 double Va = values[8];
 
                 if (type == 3) {
@@ -266,31 +265,23 @@ void MParser::parseBranchData(){
                 number_of_nodes = std::max({number_of_nodes, fbus, tbus});
                 branches.push_back({fbus, tbus, r, x, b});
 
-                int i = fbus - 1;
-                int j = tbus - 1;
+                int i = fbus;
+                int j = tbus;
                 std::complex<double> z(r, x);
                 std::complex<double> y = 1.0 / z;
 
-                Y_[i][j] -= y;
-                Y_[j][i] -= y;
+                Y_[{i, j}] -= y;
+                Y_[{j, i}] -= y;
 
-                Y_[i][i] += y;
-                Y_[j][j] += y;
-
-                Y_[i][i] += std::complex<double>(0.0, b / 2.0);
-                Y_[j][j] += std::complex<double>(0.0, b / 2.0);
+                // Dijagonalni elementi
+                Y_[{i, i}] += y + std::complex<double>(0.0, b / 2.0);
+                Y_[{j, j}] += y + std::complex<double>(0.0, b / 2.0);
             }
         }
     }
 
     file.close();
     branches_ = branches;
-
-    Y_.resize(number_of_nodes);
-    for (int i = 0; i < number_of_nodes; ++i) {
-        Y_[i].resize(number_of_nodes);
-    }
-
 }
 
 void MParser::parse() {
