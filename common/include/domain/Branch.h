@@ -8,6 +8,7 @@
 struct Branch {
     int fbus, tbus;
     double r, x, b;
+    double ratio, angle;
 };
 
 

@@ -63,7 +63,7 @@ void MParser::parseSlackBus() {
             if (values.size() >= 9) {
                 int bus_i = static_cast<int>(values[0]);
                 int type = static_cast<int>(values[1]);
-                double Va = values[8];
+                double Va = values[8] * PI / 180;
 
                 if (type == 3) {
                     file.close();
@@ -160,7 +160,7 @@ void MParser::parsePVBuses() {
                     bus.Pd = values[2] / baseMVA_;
                     bus.Qd = values[3] / baseMVA_;
                     bus.Vm = values[7];
-                    bus.Va = values[8];
+                    bus.Va = values[8] * PI / 180.0;
 
                     if (it != gen_map.end()) {
                         const GenParams& g = it->second;
@@ -218,7 +218,7 @@ void MParser::parsePQBuses() {
                         values[2] / baseMVA_,
                         values[3] / baseMVA_,
                         values[7],
-                        values[8]
+                        values[8] * PI / 180.0
                     });
                 }
             }
@@ -256,25 +256,31 @@ void MParser::parseBranchData(){
             while (ss >> val)
                 vals.push_back(val);
 
-            if (vals.size() >= 5) {
+            if (vals.size() >= 9) {
                 int fbus = static_cast<int>(vals[0]);
                 int tbus = static_cast<int>(vals[1]);
                 double r = vals[2];
                 double x = vals[3];
                 double b = vals[4];
+                double ratio = vals[8]; // column 9 is ratio (a)
+                double angle = vals[9] * PI / 180.0;
+
                 number_of_nodes = std::max({number_of_nodes, fbus, tbus});
-                branches.push_back({fbus, tbus, r, x, b});
+                branches.push_back({fbus, tbus, r, x, b, ratio, angle});
 
                 int i = fbus;
                 int j = tbus;
+
                 std::complex<double> z(r, x);
                 std::complex<double> y = 1.0 / z;
+                double tap = (ratio == 0.0) ? 1.0 : ratio;
+                std::complex<double> trans_n = std::polar(tap, angle); // a = |a| ∠ θ
 
-                Y_[{i, j}] -= y;
-                Y_[{j, i}] -= y;
+                Y_[{i, j}] -= y / std::conj(trans_n);
+                Y_[{j, i}] -= y / trans_n;
 
-                // Dijagonalni elementi
-                Y_[{i, i}] += y + std::complex<double>(0.0, b / 2.0);
+                // Diagonal entries
+                Y_[{i, i}] += y / (tap * tap) + std::complex<double>(0.0, b / 2.0);
                 Y_[{j, j}] += y + std::complex<double>(0.0, b / 2.0);
             }
         }
@@ -291,3 +297,6 @@ void MParser::parse() {
     parsePQBuses();
     parseBranchData();
 }
+
+
+const double MParser::PI = std::atan(1)*4;

@@ -26,6 +26,8 @@ class MParser{
     std::map<std::pair<int, int>, std::complex<double>> Y_;
     std::string filename_;
 
+    static const double PI;
+
     void parseBaseMVA();
     void parseSlackBus();
     std::unordered_map<int, GenParams>  parseGeneratorSetpoints();
