@@ -22,7 +22,7 @@ void DMODLWriter::write() {
 void DMODLWriter::throwIfOutIsNotOpen() {
     if (!out.is_open()) {
         std::string message = "Failed to open file for writing: " + baseFilename_ ;
-        std::cerr << message << std::endl;
+        std::cerr << message << td::endl;
         throw std::exception(message.c_str());
     }
 }
@@ -41,14 +41,14 @@ void DMODLWriter::writeOutVariables() {
     out <<"\n\t//PV Buses\n";
     SlackBus slack = parser_.slack();
     for(const auto& pv_bus: parser_.pv_buses()) {
-        out << "\tv_" << pv_bus.bus_i << "=" << slack.Vm;
-        out << "; phi_" << pv_bus.bus_i << "=" << slack.Va << "\n";
+        out << "\t" << config_.v_symbol << "_" << pv_bus.bus_i << "=" << slack.Vm;
+        out << "; " << config_.phi_symbol <<"_" << pv_bus.bus_i << "=" << slack.Va << "\n";
     }
 
     out <<"\n\t//PQ Buses\n";
     for(const auto& pq_bus: parser_.pq_buses()) {
-        out << "\tv_" << pq_bus.bus_i << "=" << pq_bus.Vm;
-        out << "; phi_" << pq_bus.bus_i << "=" << pq_bus.Va << "\n";
+        out << "\t" << config_.v_symbol << "_" <<  pq_bus.bus_i << "=" << pq_bus.Vm;
+        out << "; " << config_.phi_symbol <<"_" << pq_bus.bus_i << "=" << pq_bus.Va << "\n";
     }
 }
 
@@ -62,8 +62,8 @@ void DMODLWriter::writeParams() {
 
 void DMODLWriter::writeSlackParams() {
     out <<"\n\t//Slack Bus\n";
-    out << "\tv_" << parser_.slack().bus_i << "=" << parser_.slack().Vm << " [out=true]";
-    out << "; phi_" << parser_.slack().bus_i << "=" << parser_.slack().Va << " [out=true]\n";
+    out << "\t" << config_.v_symbol << "_" << parser_.slack().bus_i << "=" << parser_.slack().Vm << " [out=true]";
+    out << "; " << config_.phi_symbol <<"_" << parser_.slack().bus_i << "=" << parser_.slack().Va << " [out=true]\n";
 }
 
 void DMODLWriter::writeAdmittanceMatrix() {
@@ -72,8 +72,8 @@ void DMODLWriter::writeAdmittanceMatrix() {
         int i = entry.first.first;
         int j = entry.first.second;
         const std::complex<double>& y_ij = entry.second;
-        out << "\ty_" << i<< "_" << j << "=" << std::abs(y_ij);
-        out << "; theta_" << i << "_" << j << "=" << std::arg(y_ij) << "\n";
+        out << "\t" << config_.y_symbol << "_" << i<< "_" << j << "=" << std::abs(y_ij);
+        out << "; " << config_.theta_symbol <<"_" << i << "_" << j << "=" << std::arg(y_ij) << "\n";
     }
 }
 
@@ -85,17 +85,17 @@ bool DMODLWriter::shouldParamBeIncluded(int i, int j) const {
 void DMODLWriter::writePVBusParams() {
     out << "\n\t//PV Buses\n";
     for(const auto& pv_bus: parser_.pv_buses()) {
-        out << "\tPg_" << pv_bus.bus_i << "=" << pv_bus.Pg << "\n";
-        out << "\tPd_" << pv_bus.bus_i << "=" << pv_bus.Pd << "\n";
-        out << "\tvsp_" << pv_bus.bus_i << "=" << pv_bus.Vm << "\n";
+        out << "\tPg_" << pv_bus.bus_i << "=" << pv_bus.Pg;
+        out << "; Pd_" << pv_bus.bus_i << "=" << pv_bus.Pd;
+        out << "; vsp_" << pv_bus.bus_i << "=" << pv_bus.Vm << "\n";
     }
 }
 
 void DMODLWriter::writePQBusParams() {
     out <<"\n\t//PQ Buses\n";
     for(const auto& pq_bus: parser_.pq_buses()) {
-        out << "\tPd_" << pq_bus.bus_i << "=" << pq_bus.Pd << "\n";
-        out << "\tQd_" << pq_bus.bus_i << "=" << pq_bus.Qd << "\n";
+        out << "\tPd_" << pq_bus.bus_i << "=" << pq_bus.Pd;
+        out << "; Qd_" << pq_bus.bus_i << "=" << pq_bus.Qd << "\n";
     }
 }
 
@@ -112,7 +112,7 @@ void DMODLWriter::writePVBusNLEs() {
         writeFP_i_Equation(i);
         rewriteEqualOverPlusSign();
         out << "Pg_" << i << "-Pd_" << i << "\n";
-        out << "\tv_" << i << " = vsp_" << i << "\n";
+        out << "\t" << config_.v_symbol << "_" << i << " = vsp_" << i << "\n";
     }
 }
 
@@ -170,8 +170,8 @@ void DMODLWriter::writeEquationWithPQ(int i, EquationType eqType) {
 }
 
 void DMODLWriter::writeF_ij_Equation(int i, int j, TrigFunction trig_function) {
-    out << "v_" << i << "*y_" << i << "_" << j << "*v_" << j
-            << "*" << trig_function << "(phi_" << i << "-theta_" << i << "_" << j << "-phi_" << j <<") + ";
+    out << config_.v_symbol << "_" << i << "*" << config_.y_symbol << "_" << i << "_" << j << "*" << config_.v_symbol << "_" << j
+            << "*" << trig_function << "(" << config_.phi_symbol << "_" << i << "-" << config_.theta_symbol << "_" << i << "_" << j << "-" << config_.phi_symbol << "_" << j <<") + ";
 }
 
 std::ostream &operator<<(std::ostream &out, DMODLWriter::TrigFunction trig_function){

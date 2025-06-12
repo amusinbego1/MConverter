@@ -2,6 +2,7 @@
 #include <iostream>
 #include "service/MParser.h"
 #include "service/DMODLWriter.h"
+#include "service/ConfigXmlParser.h"
 
 void input(std::string&, int&, double&);
 

@@ -8,6 +8,9 @@
 #include "MParser.h"
 #include <fstream>
 
+#include "ConfigXmlParser.h"
+#include "domain/Config.h"
+
 
 class DMODLWriter{
     MParser parser_;
@@ -15,6 +18,7 @@ class DMODLWriter{
     std::ofstream out;
     int maxIter_;
     double eps_;
+    Config config_;
 
     enum TrigFunction {
         SIN, COS
@@ -56,6 +60,7 @@ public:
     explicit DMODLWriter(const MParser& parser, int maxIter, double eps):  parser_(parser), baseFilename_(extractBaseName(parser.filename())),
         out(std::string(OUTPUT_PATH) + extractBaseName(parser.filename()) + ".dmodl"),
         maxIter_(maxIter),
+        config_(ConfigXmlParser().parse()),
         eps_(eps){}
 
     ~DMODLWriter() {
