@@ -53,7 +53,7 @@ class DMODLWriter{
     void writeF_ij_Equation(int i, int j, TrigFunction trig_function);
     void rewriteEqualOverPlusSign();
     void writeComment(const char * comment);
-
+    std::optional<Branch> findBranch(int from, int to) const;
 
 
 public:

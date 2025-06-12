@@ -38,7 +38,7 @@ void DMODLWriter::writeModalHeader(){
 void DMODLWriter::writeOutVariables() {
     out << "\nVars [out=true]:\n";
 
-    out <<"\n"; writeComment("PV Buses");
+    out <<"\n"; writeComment("\tPV Buses\n");
 
     SlackBus slack = parser_.slack();
     for(const auto& pv_bus: parser_.pv_buses()) {
@@ -46,7 +46,7 @@ void DMODLWriter::writeOutVariables() {
         out << "; " << config_.phi_symbol <<"_" << pv_bus.bus_i << "=" << slack.Va << "\n";
     }
 
-    out <<"\n"; writeComment("PQ Buses");
+    out <<"\n"; writeComment("\tPQ Buses\n");
     for(const auto& pq_bus: parser_.pq_buses()) {
         out << "\t" << config_.v_symbol << "_" <<  pq_bus.bus_i << "=" << pq_bus.Vm;
         out << "; " << config_.phi_symbol <<"_" << pq_bus.bus_i << "=" << pq_bus.Va << "\n";
@@ -62,19 +62,29 @@ void DMODLWriter::writeParams() {
 }
 
 void DMODLWriter::writeSlackParams() {
-    out <<"\n"; writeComment("Slack Bus");
+    out <<"\n"; writeComment("\tSlack Bus\n");
     out << "\t" << config_.v_symbol << "_" << parser_.slack().bus_i << "=" << parser_.slack().Vm << " [out=true]";
     out << "; " << config_.phi_symbol <<"_" << parser_.slack().bus_i << "=" << parser_.slack().Va << " [out=true]\n";
 }
 
 void DMODLWriter::writeAdmittanceMatrix() {
-    out << "\n"; writeComment("Admittance Matrix");
+    out << "\n"; writeComment("\tAdmittance Matrix\n");
     for (const auto& entry : parser_.y()) {
         int i = entry.first.first;
         int j = entry.first.second;
         const std::complex<double>& y_ij = entry.second;
         out << "\t" << config_.y_symbol << "_" << i<< "_" << j << "=" << std::abs(y_ij);
-        out << "; " << config_.theta_symbol <<"_" << i << "_" << j << "=" << std::arg(y_ij) << "\n";
+        out << "; " << config_.theta_symbol <<"_" << i << "_" << j << "=" << std::arg(y_ij) << "     ";
+
+        if (i > j)
+            std::swap(i, j);
+        if (i != j) {
+            Branch currentBranch = findBranch(i, j).value();
+            std::string branchType = currentBranch.ratio != 0 ? "transformer" : "line";
+            writeComment((branchType + " " + std::to_string(i) + "-" + std::to_string(j)).c_str());
+        }
+
+        out << "\n";
     }
 }
 
@@ -84,7 +94,7 @@ bool DMODLWriter::shouldParamBeIncluded(int i, int j) const {
 }
 
 void DMODLWriter::writePVBusParams() {
-    out << "\n"; writeComment("PV Buses");
+    out << "\n"; writeComment("\tPV Buses\n");
     for(const auto& pv_bus: parser_.pv_buses()) {
         out << "\tPg_" << pv_bus.bus_i << "=" << pv_bus.Pg;
         out << "; Pd_" << pv_bus.bus_i << "=" << pv_bus.Pd;
@@ -93,7 +103,7 @@ void DMODLWriter::writePVBusParams() {
 }
 
 void DMODLWriter::writePQBusParams() {
-    out <<"\n"; writeComment("PQ Buses");
+    out <<"\n"; writeComment("\tPQ Buses\n");
     for(const auto& pq_bus: parser_.pq_buses()) {
         out << "\tPd_" << pq_bus.bus_i << "=" << pq_bus.Pd;
         out << "; Qd_" << pq_bus.bus_i << "=" << pq_bus.Qd << "\n";
@@ -107,7 +117,7 @@ void DMODLWriter::writeNLEs() {
 }
 
 void DMODLWriter::writePVBusNLEs() {
-    out << "\n"; writeComment("PV Buses");
+    out << "\n"; writeComment("\tPV Buses\n");
     for(const auto& pv_bus: parser_.pv_buses()) {
         int i = pv_bus.bus_i;
         writeFP_i_Equation(i);
@@ -118,7 +128,7 @@ void DMODLWriter::writePVBusNLEs() {
 }
 
 void DMODLWriter::writePQBusNLEs() {
-    out <<"\n"; writeComment("PQ Buses");
+    out <<"\n"; writeComment("\tPQ Buses\n");
     for(const auto& pq_bus: parser_.pq_buses()) {
         int i = pq_bus.bus_i;
         writeFP_i_Equation(i);
@@ -177,7 +187,12 @@ void DMODLWriter::writeF_ij_Equation(int i, int j, TrigFunction trig_function) {
 
 void DMODLWriter::writeComment(const char *comment) {
     if (config_.comments_included)
-        out << "\t//" << comment << "\n";
+        out << "//" << comment ;
+}
+
+std::optional<Branch> DMODLWriter::findBranch(int from, int to) const {
+    auto foundBranch = std::find_if(parser_.branches().begin(), parser_.branches().end(), [from, to](const Branch& branch){return branch.fbus == from && branch.tbus == to;});
+    return {*foundBranch};
 }
 
 

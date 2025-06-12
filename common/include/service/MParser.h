@@ -64,7 +64,7 @@ public:
         return pq_buses_;
     }
 
-    [[nodiscard]] std::vector<Branch> branches() const {
+    [[nodiscard]] const std::vector<Branch>& branches() const {
         return branches_;
     }
 
