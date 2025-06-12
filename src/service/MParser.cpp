@@ -34,6 +34,7 @@ void MParser::parseBaseMVA() {
 }
 
 void MParser::parseSlackBus() {
+    auto gen_map = parseGeneratorSetpoints();
     std::ifstream file(filename_);
     if (!file.is_open()) {
         std::cerr << "Failed to open file: " << filename_ << std::endl;
@@ -67,7 +68,7 @@ void MParser::parseSlackBus() {
 
                 if (type == 3) {
                     file.close();
-                    slack_ = SlackBus{bus_i, Vm, Va};
+                    slack_ = SlackBus{bus_i, gen_map[bus_i].Vg, Va};
                     return;
                 }
             }
