@@ -101,7 +101,7 @@ void DMODLWriter::writePVBusParams() {
         out << "; Pd_" << pv_bus.bus_i << "=" << pv_bus.Pd;
         out << "; vsp_" << pv_bus.bus_i << "=" << pv_bus.Vm << "\n";
         writePowerParams(pv_bus);
-        out << "\n";
+        out << "\tcGen2Reg_" << pv_bus.bus_i << "=true [type=bool]\n\n";
     }
 }
 
@@ -117,6 +117,7 @@ void DMODLWriter::writeSmallPowerParams(const PVBus& pv_bus) {
         out << "\tQinj_" << pv_bus.bus_i << "=" << pv_bus.Qg - pv_bus.Qd
             << "; Qinj_min_" << pv_bus.bus_i << "=" << pv_bus.Qmin
             << "; Qinj_max_" << pv_bus.bus_i << "=" << pv_bus.Qmax << "\n";
+
 }
 
 void DMODLWriter::writeMediumPowerParams(const PVBus& pv_bus) {
@@ -166,7 +167,13 @@ void DMODLWriter::writePVBusNLEs() {
         writeFP_i_Equation(i);
         rewriteEqualOverPlusSign();
         out << "Pg_" << i << "-Pd_" << i << "\n";
-        out << "\t" << config_.v_symbol << "_" << i << " = vsp_" << i << "\n\n";
+        out << "\tif cGen2Reg_" << i << ":\n";
+        out << "\t\t" << config_.v_symbol << "_" << i << " = vsp_" << i << "\n";
+        out << "\telse:\n\t\t";
+        writeFQ_i_Equation(i);
+        rewriteEqualOverPlusSign();
+        out << "Qinj_" << i << "\n";
+        out << "\tend\n\n";
     }
 }
 
@@ -244,15 +251,21 @@ void DMODLWriter::writeGroupHeader(const char * groupName) {
 }
 
 void DMODLWriter::writeOneLimit(const PVBus& pv_bus) {
-    out << "\t\tQinj_" << pv_bus.bus_i << " = ";
+    out << "\t\tif cGen2Reg_" << pv_bus.bus_i << ":\n";
+
+    out << "\t\t\tQinj_" << pv_bus.bus_i << " = ";
     writeFQ_i_Equation(pv_bus.bus_i);
-    rewriteEqualOverSpace();
-    out << "\t\tif Qinj_" << pv_bus.bus_i << " <= " << "Qinj_min_" << pv_bus.bus_i << " [signal=TooLow]:\n";
-    out << "\t\t\tQinj_" << pv_bus.bus_i << "=Qinj_min_" << pv_bus.bus_i << "\n";
-    out << "\t\telse:\n";
-    out << "\t\t\tif Qinj_" << pv_bus.bus_i << " >= " << "Qinj_max_" << pv_bus.bus_i << " [signal=TooHigh]:\n";
-    out << "\t\t\t\tQinj_" << pv_bus.bus_i << "=Qinj_max_" << pv_bus.bus_i << "\n";
+    rewriteSpaceOverEqualSign();
+    out << "\t\t\tif Qinj_" << pv_bus.bus_i << " <= " << "Qinj_min_" << pv_bus.bus_i << " [signal=TooLow]:\n";
+    out << "\t\t\t\tcGen2Reg_" << pv_bus.bus_i << "=false\n";
+    out << "\t\t\t\tQinj_" << pv_bus.bus_i << "=Qinj_min_" << pv_bus.bus_i << "\n";
+    out << "\t\t\telse:\n";
+    out << "\t\t\t\tif Qinj_" << pv_bus.bus_i << " >= " << "Qinj_max_" << pv_bus.bus_i << " [signal=TooHigh]:\n";
+    out << "\t\t\t\t\tcGen2Reg_" << pv_bus.bus_i << "=false\n";
+    out << "\t\t\t\t\tQinj_" << pv_bus.bus_i << "=Qinj_max_" << pv_bus.bus_i << "\n";
+    out << "\t\t\t\tend\n";
     out << "\t\t\tend\n";
+
     out << "\t\tend\n\n";
 }
 
@@ -275,7 +288,7 @@ void DMODLWriter::rewriteEqualOverPlusSign() {
     out << "= ";
 }
 
-void DMODLWriter::rewriteEqualOverSpace() {
+void DMODLWriter::rewriteSpaceOverEqualSign() {
     out.seekp(-2, std::ios_base::cur);
     out << " \n";
 }
