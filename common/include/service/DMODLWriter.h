@@ -49,6 +49,19 @@ class DMODLWriter{
     void writeEquationWithSlack(int i, EquationType);
     void writeEquationWithPV(int i, EquationType);
     void writeEquationWithPQ(int i, EquationType);
+    void writeLimits();
+    void writePowerParams(const PVBus& pv_bus);
+    void writeSmallPowerParams(const PVBus& pv_bus);
+    void writeMediumPowerParams(const PVBus& pv_bus);
+    void writeHighPowerParams(const PVBus& pv_bus);
+    void writeUltraHighPowerParams(const PVBus& pv_bus);
+    void writeSmallGroup();
+    void writeMediumGroup();
+    void writeHighGroup();
+    void writeUltraHighGroup();
+    void writeGroupHeader(const char *);
+    void writeOneLimit(const PVBus& pv_bus);
+
 
     void writeF_ij_Equation(int i, int j, TrigFunction trig_function);
     void rewriteEqualOverPlusSign();

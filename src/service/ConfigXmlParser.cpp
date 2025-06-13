@@ -4,7 +4,20 @@
 
 #include "service/ConfigXmlParser.h"
 
-ConfigXmlParser::ConfigXmlParser():defaultConfig_({"v", "phi", "y", "theta", true}){}
+ConfigXmlParser::ConfigXmlParser():defaultConfig_({
+    "v",
+    "phi",
+    "y",
+    "theta",
+    true,
+    false,
+    false,
+    false,
+    false,
+    50,
+    150,
+1000}
+){}
 
 Config ConfigXmlParser::parse(){
     Config config = defaultConfig_;
@@ -55,6 +68,37 @@ Config ConfigXmlParser::parse(){
         ++comments_included;
     }
 
+    auto small_power_limits = root.getChildNode("small_power_limits");
+    while (small_power_limits.isOk())
+    {
+        td::String small_power_limits_str = small_power_limits->getValue();
+        config.small_power_limits = !small_power_limits_str.cCompareNoCase("true");
+        ++small_power_limits;
+    }
+
+    auto medium_power_limits = root.getChildNode("medium_power_limits");
+    while (medium_power_limits.isOk())
+    {
+        td::String medium_power_limits_str = medium_power_limits->getValue();
+        config.medium_power_limits = !medium_power_limits_str.cCompareNoCase("true");
+        ++medium_power_limits;
+    }
+
+    auto high_power_limits = root.getChildNode("high_power_limits");
+    while (high_power_limits.isOk())
+    {
+        td::String high_power_limits_str = high_power_limits->getValue();
+        config.high_power_limits = !high_power_limits_str.cCompareNoCase("true");
+        ++high_power_limits;
+    }
+
+    auto ultra_high_power_limits = root.getChildNode("ultra_high_power_limits");
+    while (ultra_high_power_limits.isOk())
+    {
+        td::String ultra_high_power_limits_str = ultra_high_power_limits->getValue();
+        config.ultra_high_power_limits = !ultra_high_power_limits_str.cCompareNoCase("true");
+        ++ultra_high_power_limits;
+    }
 
     return config;
 

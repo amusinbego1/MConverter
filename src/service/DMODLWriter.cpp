@@ -16,6 +16,7 @@ void DMODLWriter::write() {
     writeOutVariables();
     writeParams();
     writeNLEs();
+    writeLimits();
     out << "\nend";
 }
 
@@ -99,8 +100,49 @@ void DMODLWriter::writePVBusParams() {
         out << "\tPg_" << pv_bus.bus_i << "=" << pv_bus.Pg;
         out << "; Pd_" << pv_bus.bus_i << "=" << pv_bus.Pd;
         out << "; vsp_" << pv_bus.bus_i << "=" << pv_bus.Vm << "\n";
+        writePowerParams(pv_bus);
+        out << "\n";
     }
 }
+
+void DMODLWriter::writePowerParams(const PVBus& pv_bus) {
+    writeSmallPowerParams(pv_bus);
+    writeMediumPowerParams(pv_bus);
+    writeHighPowerParams(pv_bus);
+    writeUltraHighPowerParams(pv_bus);
+}
+
+void DMODLWriter::writeSmallPowerParams(const PVBus& pv_bus) {
+    if ((pv_bus.Qg - pv_bus.Qd) * parser_.base_mva() <= config_.small_upper_limit)
+        out << "\tQinj_" << pv_bus.bus_i << "=" << pv_bus.Qg
+            << "; Qinj_min_" << pv_bus.bus_i << "=" << pv_bus.Qmin
+            << "; Qinj_max_" << pv_bus.bus_i << "=" << pv_bus.Qmax << "\n";
+}
+
+void DMODLWriter::writeMediumPowerParams(const PVBus& pv_bus) {
+    double Qinj = (pv_bus.Qg - pv_bus.Qd) * parser_.base_mva();
+    if (Qinj > config_.small_upper_limit && Qinj <= config_.medium_upper_limit)
+        out << "; Qinj_" << pv_bus.bus_i << "=" << pv_bus.Qg - pv_bus.Qd
+            << "; Qinj_min_" << pv_bus.bus_i << "=" << pv_bus.Qmin
+            << "; Qinj_max_" << pv_bus.bus_i << "=" << pv_bus.Qmax << "\n";
+}
+
+void DMODLWriter::writeHighPowerParams(const PVBus& pv_bus) {
+    double Qinj = (pv_bus.Qg - pv_bus.Qd) * parser_.base_mva();
+    if (Qinj > config_.medium_upper_limit && Qinj <= config_.high_upper_limit)
+        out << "; Qinj_" << pv_bus.bus_i << "=" << pv_bus.Qg - pv_bus.Qd
+            << "; Qinj_min_" << pv_bus.bus_i << "=" << pv_bus.Qmin
+            << "; Qinj_max_" << pv_bus.bus_i << "=" << pv_bus.Qmax << "\n";
+}
+
+void DMODLWriter::writeUltraHighPowerParams(const PVBus& pv_bus) {
+    double Qinj = (pv_bus.Qg - pv_bus.Qd) * parser_.base_mva();
+    if (Qinj > config_.high_upper_limit)
+        out << "; Qinj_" << pv_bus.bus_i << "=" << pv_bus.Qg - pv_bus.Qd
+            << "; Qinj_min_" << pv_bus.bus_i << "=" << pv_bus.Qmin
+            << "; Qinj_max_" << pv_bus.bus_i << "=" << pv_bus.Qmax << "\n";
+}
+
 
 void DMODLWriter::writePQBusParams() {
     out <<"\n"; writeComment("\tPQ Buses\n");
@@ -139,6 +181,81 @@ void DMODLWriter::writePQBusNLEs() {
         out << "-Qd_" << i << "\n\n";
     }
 }
+
+void DMODLWriter::writeLimits() {
+    out << "\nLimits:\n";
+    writeSmallGroup();
+    writeMediumGroup();
+    writeHighGroup();
+    writeUltraHighGroup();
+}
+
+void DMODLWriter::writeSmallGroup() {
+    if (config_.small_power_limits) {
+        writeGroupHeader("smallPower");
+        for(const auto& pv_bus: parser_.pv_buses()) {
+            if ((pv_bus.Qg - pv_bus.Qd) * parser_.base_mva() <= config_.small_upper_limit)
+                writeOneLimit(pv_bus);
+        }
+        out << "\tend\n";
+    }
+}
+
+void DMODLWriter::writeMediumGroup() {
+    if (config_.medium_power_limits) {
+        writeGroupHeader("mediumPower");
+        for(const auto& pv_bus: parser_.pv_buses()) {
+            double Qinj = (pv_bus.Qg - pv_bus.Qd) * parser_.base_mva();
+            if (Qinj > config_.small_upper_limit && Qinj <= config_.medium_upper_limit)
+                writeOneLimit(pv_bus);
+        }
+        out << "\tend\n";
+    }
+}
+
+void DMODLWriter::writeHighGroup() {
+    if (config_.high_power_limits) {
+        writeGroupHeader("highPower");
+        for(const auto& pv_bus: parser_.pv_buses()) {
+            double Qinj = (pv_bus.Qg - pv_bus.Qd) * parser_.base_mva();
+            if (Qinj > config_.medium_upper_limit && Qinj <= config_.high_upper_limit)
+                writeOneLimit(pv_bus);
+        }
+        out << "\tend\n";
+    }
+}
+
+void DMODLWriter::writeUltraHighGroup() {
+    if (config_.ultra_high_power_limits) {
+        writeGroupHeader("ultraHighPower");
+        for(const auto& pv_bus: parser_.pv_buses()) {
+            double Qinj = (pv_bus.Qg - pv_bus.Qd) * parser_.base_mva();
+            if (Qinj > config_.high_upper_limit)
+                writeOneLimit(pv_bus);
+        }
+        out << "\tend\n";
+    }
+}
+
+void DMODLWriter::writeGroupHeader(const char * groupName) {
+    out << "\t" << "group [name=\"" << groupName << "\" enabled=true]" << "\n";
+}
+
+void DMODLWriter::writeOneLimit(const PVBus& pv_bus) {
+    out << "\t";
+    writeFQ_i_Equation(pv_bus.bus_i);
+    rewriteEqualOverPlusSign();
+    out << "Qinj_" << pv_bus.bus_i << "\n";
+    out << "\t\tif Qinj_" << pv_bus.bus_i << " <= " << "Qinj_min_" << pv_bus.bus_i << " [signal=TooLow]:\n";
+    out << "\t\t\tQinj_" << pv_bus.bus_i << "=Qinj_min_" << pv_bus.bus_i << "\n";
+    out << "\t\telse:\n";
+    out << "\t\t\tif Qinj_" << pv_bus.bus_i << " >= " << "Qinj_max_" << pv_bus.bus_i << " [signal=TooHigh]:\n";
+    out << "\t\t\t\tQinj_" << pv_bus.bus_i << "=Qinj_max_" << pv_bus.bus_i << "\n";
+    out << "\t\t\tend\n";
+    out << "\t\tend\n\n";
+}
+
+
 
 void DMODLWriter::writeFP_i_Equation(int i) {
     writeEquationWithSlack(i, EquationType::P);
