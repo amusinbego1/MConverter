@@ -114,7 +114,7 @@ void DMODLWriter::writePowerParams(const PVBus& pv_bus) {
 
 void DMODLWriter::writeSmallPowerParams(const PVBus& pv_bus) {
     if ((pv_bus.Qg - pv_bus.Qd) * parser_.base_mva() <= config_.small_upper_limit)
-        out << "\tQinj_" << pv_bus.bus_i << "=" << pv_bus.Qg
+        out << "\tQinj_" << pv_bus.bus_i << "=" << pv_bus.Qg - pv_bus.Qd
             << "; Qinj_min_" << pv_bus.bus_i << "=" << pv_bus.Qmin
             << "; Qinj_max_" << pv_bus.bus_i << "=" << pv_bus.Qmax << "\n";
 }
