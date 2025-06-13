@@ -162,6 +162,7 @@ void DMODLWriter::writePVBusNLEs() {
     out << "\n"; writeComment("\tPV Buses\n");
     for(const auto& pv_bus: parser_.pv_buses()) {
         int i = pv_bus.bus_i;
+        out << "\t";
         writeFP_i_Equation(i);
         rewriteEqualOverPlusSign();
         out << "Pg_" << i << "-Pd_" << i << "\n";
@@ -173,9 +174,10 @@ void DMODLWriter::writePQBusNLEs() {
     out <<"\n"; writeComment("\tPQ Buses\n");
     for(const auto& pq_bus: parser_.pq_buses()) {
         int i = pq_bus.bus_i;
+        out << "\t";
         writeFP_i_Equation(i);
         rewriteEqualOverPlusSign();
-        out << "-Pd_" << i << "\n";
+        out << "-Pd_" << i << "\n\t";
         writeFQ_i_Equation(i);
         rewriteEqualOverPlusSign();
         out << "-Qd_" << i << "\n\n";
@@ -238,14 +240,13 @@ void DMODLWriter::writeUltraHighGroup() {
 }
 
 void DMODLWriter::writeGroupHeader(const char * groupName) {
-    out << "\t" << "group [name=\"" << groupName << "\" enabled=true]" << "\n";
+    out << "\t" << "group [name=\"" << groupName << "\" enabled=true]:" << "\n";
 }
 
 void DMODLWriter::writeOneLimit(const PVBus& pv_bus) {
-    out << "\t";
+    out << "\t\tQinj_" << pv_bus.bus_i << " = ";
     writeFQ_i_Equation(pv_bus.bus_i);
-    rewriteEqualOverPlusSign();
-    out << "Qinj_" << pv_bus.bus_i << "\n";
+    rewriteEqualOverSpace();
     out << "\t\tif Qinj_" << pv_bus.bus_i << " <= " << "Qinj_min_" << pv_bus.bus_i << " [signal=TooLow]:\n";
     out << "\t\t\tQinj_" << pv_bus.bus_i << "=Qinj_min_" << pv_bus.bus_i << "\n";
     out << "\t\telse:\n";
@@ -274,9 +275,13 @@ void DMODLWriter::rewriteEqualOverPlusSign() {
     out << "= ";
 }
 
+void DMODLWriter::rewriteEqualOverSpace() {
+    out.seekp(-2, std::ios_base::cur);
+    out << " \n";
+}
+
 void DMODLWriter::writeEquationWithSlack(int i, EquationType eqType) {
     int j = parser_.slack().bus_i;
-    out << "\t";
     if(shouldParamBeIncluded(i, j))
         writeF_ij_Equation(i,j, TrigFunction(eqType));
 }
