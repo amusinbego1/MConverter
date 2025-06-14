@@ -146,7 +146,7 @@ void DMODLWriter::writeUltraHighPowerParams(const PVBus& pv_bus) {
 
 
 void DMODLWriter::writePQBusParams() {
-    out <<"\n"; writeComment("\tPQ Buses\n");
+    writeComment("\tPQ Buses\n");
     for(const auto& pq_bus: parser_.pq_buses()) {
         out << "\tPd_" << pq_bus.bus_i << "=" << pq_bus.Pd;
         out << "; Qd_" << pq_bus.bus_i << "=" << pq_bus.Qd << "\n";
@@ -178,7 +178,7 @@ void DMODLWriter::writePVBusNLEs() {
 }
 
 void DMODLWriter::writePQBusNLEs() {
-    out <<"\n"; writeComment("\tPQ Buses\n");
+    writeComment("\tPQ Buses\n");
     for(const auto& pq_bus: parser_.pq_buses()) {
         int i = pq_bus.bus_i;
         out << "\t";
@@ -192,7 +192,7 @@ void DMODLWriter::writePQBusNLEs() {
 }
 
 void DMODLWriter::writeLimits() {
-    out << "\nLimits:\n";
+    out << "Limits:\n\n";
     writeSmallGroup();
     writeMediumGroup();
     writeHighGroup();
