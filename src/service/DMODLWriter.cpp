@@ -81,7 +81,7 @@ void DMODLWriter::writeAdmittanceMatrix() {
             std::swap(i, j);
         if (i != j) {
             Branch currentBranch = findBranch(i, j).value();
-            std::string branchType = currentBranch.ratio != 0 ? "transformer" : "line";
+            std::string branchType = std::abs(currentBranch.ratio) > 1e-10? "transformer" : "line";
             writeComment((branchType + " " + std::to_string(i) + "-" + std::to_string(j)).c_str());
         }
 
